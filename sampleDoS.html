@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DoS vs DDoS Attack Animation</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #ffffff;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    header {
+      text-align: center;
+      padding: 24px 16px 10px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      color: #b91c1c;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      font-size: 17px;
+      color: #475569;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px 22px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .dos-btn {
+      background: #f59e0b;
+      color: #111827;
+    }
+
+    .ddos-btn {
+      background: #dc2626;
+      color: white;
+    }
+
+    .reset-btn {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .scene {
+      position: relative;
+      width: min(1100px, 94%);
+      height: 540px;
+      margin: 0 auto 24px;
+      border: 3px solid #e2e8f0;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(239, 68, 68, 0.06), transparent 32%),
+        linear-gradient(#ffffff, #f8fafc);
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .status {
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      min-width: 280px;
+      text-align: center;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: #dcfce7;
+      color: #166534;
+      font-weight: bold;
+      z-index: 20;
+      transition: all 0.3s ease;
+    }
+
+    .status.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status.danger {
+      background: #fee2e2;
+      color: #991b1b;
+      animation: blink 0.6s infinite alternate;
+    }
+
+    @keyframes blink {
+      from { transform: translateX(-50%) scale(1); }
+      to { transform: translateX(-50%) scale(1.04); }
+    }
+
+    .server-area {
+      position: absolute;
+      left: 50%;
+      top: 51%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 10;
+    }
+
+    .server {
+      width: 150px;
+      height: 180px;
+      padding: 18px;
+      border-radius: 20px;
+      background: #334155;
+      border: 5px solid #64748b;
+      box-shadow: 0 14px 24px rgba(15, 23, 42, 0.22);
+      transition: all 0.3s ease;
+    }
+
+    .server.overloaded {
+      background: #7f1d1d;
+      border-color: #ef4444;
+      animation: shake 0.12s infinite;
+      box-shadow: 0 0 35px rgba(239, 68, 68, 0.65);
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0); }
+      25% { transform: translate(-3px, 2px); }
+      50% { transform: translate(3px, -2px); }
+      75% { transform: translate(-2px, -2px); }
+      100% { transform: translate(2px, 2px); }
+    }
+
+    .server-slot {
+      height: 15px;
+      background: #0f172a;
+      border-radius: 5px;
+      margin: 14px 0;
+      position: relative;
+    }
+
+    .server-slot::after {
+      content: "";
+      position: absolute;
+      right: 8px;
+      top: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .server.overloaded .server-slot::after {
+      background: #facc15;
+      box-shadow: 0 0 10px #facc15;
+    }
+
+    .server-label {
+      margin-top: 12px;
+      font-weight: bold;
+      font-size: 19px;
+    }
+
+    .load-box {
+      width: 190px;
+      height: 20px;
+      margin: 15px auto 0;
+      border-radius: 20px;
+      background: #e2e8f0;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+    }
+
+    .load-bar {
+      width: 7%;
+      height: 100%;
+      background: #22c55e;
+      transition: width 0.25s, background 0.25s;
+    }
+
+    .load-text {
+      margin-top: 7px;
+      font-weight: bold;
+      color: #475569;
+    }
+
+    .device {
+      position: absolute;
+      width: 105px;
+      text-align: center;
+      z-index: 5;
+      transition: opacity 0.3s;
+    }
+
+    .device-icon {
+      width: 72px;
+      height: 58px;
+      margin: auto;
+      border: 4px solid #334155;
+      border-radius: 9px;
+      background: #dbeafe;
+      position: relative;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+    }
+
+    .device-icon::before {
+      content: "";
+      position: absolute;
+      width: 28px;
+      height: 8px;
+      left: 18px;
+      bottom: -13px;
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    .device-icon::after {
+      content: "";
+      position: absolute;
+      width: 48px;
+      height: 5px;
+      left: 8px;
+      bottom: -18px;
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    .device.attacker .device-icon {
+      background: #fee2e2;
+      border-color: #b91c1c;
+    }
+
+    .device.bot .device-icon {
+      background: #ffedd5;
+      border-color: #c2410c;
+    }
+
+    .device-label {
+      margin-top: 22px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .hidden-device {
+      opacity: 0.18;
+    }
+
+    .packet {
+      position: absolute;
+      width: 17px;
+      height: 17px;
+      border-radius: 4px;
+      background: #ef4444;
+      box-shadow: 0 0 9px rgba(239, 68, 68, 0.75);
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .packet::after {
+      content: "!";
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .legend {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #e2e8f0;
+      font-weight: bold;
+      color: #475569;
+      z-index: 20;
+      white-space: nowrap;
+    }
+
+    .impact {
+      display: none;
+      position: absolute;
+      right: 18px;
+      top: 80px;
+      width: 215px;
+      padding: 15px;
+      border-radius: 15px;
+      background: #fff1f2;
+      border: 2px solid #fb7185;
+      color: #9f1239;
+      font-weight: bold;
+      z-index: 20;
+      text-align: center;
+    }
+
+    .impact.show {
+      display: block;
+      animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .normal-user {
+      position: absolute;
+      left: 50%;
+      bottom: 68px;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: bold;
+      color: #64748b;
+      text-align: center;
+    }
+
+    .normal-user span {
+      display: block;
+      font-size: 30px;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 700px) {
+      .scene {
+        height: 620px;
+      }
+
+      .server-area {
+        top: 48%;
+      }
+
+      .impact {
+        top: auto;
+        right: 50%;
+        bottom: 80px;
+        transform: translateX(50%);
+        width: 230px;
+      }
+
+      .impact.show {
+        animation: none;
+      }
+
+      .legend {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>DoS vs DDoS Attack</h1>
+    <p>Click a button and watch what happens to the server.</p>
+  </header>
+
+  <div class="controls">
+    <button class="dos-btn" onclick="startDoS()">▶ Show DoS Attack</button>
+    <button class="ddos-btn" onclick="startDDoS()">▶ Show DDoS Attack</button>
+    <button class="reset-btn" onclick="resetDemo()">↻ Reset</button>
+  </div>
+
+  <main class="scene" id="scene">
+    <div class="status" id="status">Server is working normally</div>
+
+    <div class="impact" id="impact">
+      Genuine users cannot access the service!
+    </div>
+
+    <div class="server-area">
+      <div class="server" id="server">
+        <div class="server-slot"></div>
+        <div class="server-slot"></div>
+        <div class="server-slot"></div>
+        <div class="server-slot"></div>
+      </div>
+
+      <div class="server-label">Website Server</div>
+
+      <div class="load-box">
+        <div class="load-bar" id="loadBar"></div>
+      </div>
+
+      <div class="load-text" id="loadText">Server Load: 7%</div>
+    </div>
+
+    <div class="normal-user">
+      <span>🧑‍🎓</span>
+      Normal user trying to open the website
+    </div>
+
+    <div class="legend" id="legend">
+      Select DoS or DDoS
+    </div>
+  </main>
+
+  <script>
+    const scene = document.getElementById("scene");
+    const server = document.getElementById("server");
+    const statusBox = document.getElementById("status");
+    const loadBar = document.getElementById("loadBar");
+    const loadText = document.getElementById("loadText");
+    const legend = document.getElementById("legend");
+    const impact = document.getElementById("impact");
+
+    let attackTimer = null;
+    let loadTimer = null;
+    let devices = [];
+    let load = 7;
+
+    function createDevice(x, y, label, type = "bot") {
+      const device = document.createElement("div");
+      device.className = `device ${type}`;
+      device.style.left = `${x}px`;
+      device.style.top = `${y}px`;
+      device.innerHTML = `
+        <div class="device-icon"></div>
+        <div class="device-label">${label}</div>
+      `;
+      scene.appendChild(device);
+      devices.push(device);
+      return device;
+    }
+
+    function clearDevices() {
+      devices.forEach(device => device.remove());
+      devices = [];
+    }
+
+    function clearPackets() {
+      document.querySelectorAll(".packet").forEach(packet => packet.remove());
+    }
+
+    function getCenter(element) {
+      const sceneRect = scene.getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
+
+      return {
+        x: rect.left - sceneRect.left + rect.width / 2,
+        y: rect.top - sceneRect.top + rect.height / 2
+      };
+    }
+
+    function sendPacket(source, speed = 900) {
+      const sourceCenter = getCenter(source);
+      const serverCenter = getCenter(server);
+
+      const packet = document.createElement("div");
+      packet.className = "packet";
+      packet.style.left = `${sourceCenter.x - 8}px`;
+      packet.style.top = `${sourceCenter.y - 8}px`;
+      scene.appendChild(packet);
+
+      const animation = packet.animate(
+        [
+          {
+            transform: "translate(0, 0) scale(0.8)",
+            opacity: 0.4
+          },
+          {
+            transform: `translate(${serverCenter.x - sourceCenter.x}px,
+                                  ${serverCenter.y - sourceCenter.y}px) scale(1.15)`,
+            opacity: 1
+          }
+        ],
+        {
+          duration: speed,
+          easing: "linear"
+        }
+      );
+
+      animation.onfinish = () => packet.remove();
+    }
+
+    function increaseLoad(amount, title) {
+      clearInterval(loadTimer);
+
+      loadTimer = setInterval(() => {
+        load = Math.min(100, load + amount);
+
+        loadBar.style.width = `${load}%`;
+        loadText.textContent = `Server Load: ${load}%`;
+
+        if (load < 55) {
+          loadBar.style.background = "#f59e0b";
+          statusBox.className = "status warning";
+          statusBox.textContent = title;
+        } else if (load < 90) {
+          loadBar.style.background = "#f97316";
+          statusBox.className = "status warning";
+          statusBox.textContent = "Server is slowing down...";
+        } else {
+          loadBar.style.background = "#dc2626";
+          server.classList.add("overloaded");
+          statusBox.className = "status danger";
+          statusBox.textContent = "SERVER OVERLOADED — SERVICE DOWN";
+          impact.classList.add("show");
+          clearInterval(loadTimer);
+        }
+      }, 280);
+    }
+
+    function startDoS() {
+      resetDemo();
+
+      legend.textContent = "DoS: One device sends a huge number of requests";
+      statusBox.className = "status warning";
+      statusBox.textContent = "One attacker starts flooding the server";
+
+      const attacker = createDevice(
+        45,
+        scene.clientHeight / 2 - 70,
+        "Single Attacker",
+        "attacker"
+      );
+
+      attackTimer = setInterval(() => {
+        for (let i = 0; i < 4; i++) {
+          setTimeout(() => sendPacket(attacker, 850), i * 90);
+        }
+      }, 430);
+
+      increaseLoad(6, "One attacker is sending repeated requests");
+    }
+
+    function startDDoS() {
+      resetDemo();
+
+      legend.textContent = "DDoS: Many infected devices attack together";
+      statusBox.className = "status warning";
+      statusBox.textContent = "A botnet starts attacking from many locations";
+
+      const positions = [
+        [35, 90],
+        [35, 235],
+        [35, 380],
+        [scene.clientWidth - 140, 90],
+        [scene.clientWidth - 140, 235],
+        [scene.clientWidth - 140, 380],
+        [scene.clientWidth / 2 - 250, 70],
+        [scene.clientWidth / 2 + 145, 70]
+      ];
+
+      positions.forEach((position, index) => {
+        createDevice(
+          position[0],
+          position[1],
+          `Bot ${index + 1}`,
+          "bot"
+        );
+      });
+
+      attackTimer = setInterval(() => {
+        devices.forEach((device, index) => {
+          setTimeout(() => sendPacket(device, 650), index * 35);
+        });
+      }, 330);
+
+      increaseLoad(10, "Many devices are attacking at the same time");
+    }
+
+    function resetDemo() {
+      clearInterval(attackTimer);
+      clearInterval(loadTimer);
+      clearDevices();
+      clearPackets();
+
+      load = 7;
+      loadBar.style.width = "7%";
+      loadBar.style.background = "#22c55e";
+      loadText.textContent = "Server Load: 7%";
+
+      server.classList.remove("overloaded");
+      statusBox.className = "status";
+      statusBox.textContent = "Server is working normally";
+
+      legend.textContent = "Select DoS or DDoS";
+      impact.classList.remove("show");
+    }
+
+    window.addEventListener("resize", () => {
+      if (devices.length > 0) {
+        resetDemo();
+      }
+    });
+  </script>
+</body>
+</html>
